@@ -1,0 +1,14 @@
+{
+  "name": "iron-log",
+  "version": "1.0.0",
+  "description": "Beginner Full-Body Workout Tracker",
+  "type": "module",
+  "scripts": {
+    "dev": "npx netlify dev",
+    "db:init": "npx netlify db init",
+    "db:migrate": "node db-migrate.mjs"
+  },
+  "dependencies": {
+    "@netlify/neon": "^0.1.0"
+  }
+}

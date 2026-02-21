@@ -1,0 +1,1621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Iron Log — Beginner Full-Body Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #0c0c0e;
+  --surface: #161619;
+  --surface2: #1e1e22;
+  --surface3: #26262b;
+  --border: #2a2a30;
+  --border-light: #3a3a42;
+  --text: #e8e6e3;
+  --text-dim: #8a8a94;
+  --text-muted: #5a5a64;
+  --accent: #e85d3a;
+  --accent-glow: #ff6b45;
+  --accent2: #3ae8c0;
+  --accent3: #5b8def;
+  --danger: #e84057;
+  --success: #3ae87a;
+  --radius: 10px;
+  --radius-sm: 6px;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Source Sans 3', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* NAV */
+.nav {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(12,12,14,0.92);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  display: flex; align-items: center; justify-content: space-between;
+  height: 60px;
+}
+.nav-brand {
+  font-family: 'Oswald', sans-serif;
+  font-size: 22px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 2px;
+  color: var(--accent);
+  display: flex; align-items: center; gap: 10px;
+}
+.nav-brand svg { width: 28px; height: 28px; }
+.nav-tabs {
+  display: flex; gap: 4px;
+  background: var(--surface);
+  border-radius: 8px; padding: 4px;
+  border: 1px solid var(--border);
+}
+.nav-tab {
+  padding: 8px 20px;
+  border-radius: 6px;
+  font-family: 'Oswald', sans-serif;
+  font-size: 14px; font-weight: 500;
+  text-transform: uppercase; letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.25s;
+  color: var(--text-dim);
+  background: transparent;
+  border: none;
+}
+.nav-tab:hover { color: var(--text); }
+.nav-tab.active {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 2px 12px rgba(232,93,58,0.35);
+}
+
+/* MAIN */
+.main { max-width: 1100px; margin: 0 auto; padding: 28px 20px 80px; }
+.view { display: none; }
+.view.active { display: block; }
+
+/* PAGE HEADERS */
+.page-header {
+  margin-bottom: 28px;
+}
+.page-title {
+  font-family: 'Oswald', sans-serif;
+  font-size: 32px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 1px;
+}
+.page-subtitle { font-size: 14px; color: var(--text-dim); margin-top: 4px; }
+
+/* CARDS */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  margin-bottom: 16px;
+}
+.card-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 16px;
+}
+.card-title {
+  font-family: 'Oswald', sans-serif;
+  font-size: 18px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+
+/* WORKOUT FORM */
+.warmup-row {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 16px;
+  margin-bottom: 20px;
+  padding: 16px 20px;
+  background: var(--surface2);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+.warmup-label {
+  font-family: 'Oswald', sans-serif;
+  font-size: 16px; font-weight: 600;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.warmup-options { display: flex; gap: 16px; }
+.warmup-opt {
+  display: flex; align-items: center; gap: 6px;
+  cursor: pointer; font-size: 14px;
+}
+.warmup-opt input[type="checkbox"] {
+  appearance: none; -webkit-appearance: none;
+  width: 20px; height: 20px;
+  border: 2px solid var(--border-light);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+.warmup-opt input[type="checkbox"]:checked {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.warmup-opt input[type="checkbox"]:checked::after {
+  content: '✓'; position: absolute;
+  top: 50%; left: 50%; transform: translate(-50%,-50%);
+  color: #fff; font-size: 13px; font-weight: 700;
+}
+.date-input {
+  background: var(--surface3);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  padding: 8px 12px;
+  font-size: 14px;
+  font-family: 'Source Sans 3', sans-serif;
+}
+.date-input::-webkit-calendar-picker-indicator { filter: invert(0.7); }
+
+.exercises-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+@media (max-width: 700px) {
+  .exercises-grid { grid-template-columns: 1fr; }
+  .nav-tabs { display: none; }
+  .nav-mobile { display: flex !important; }
+}
+
+.exercise-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  transition: border-color 0.3s;
+}
+.exercise-card:hover { border-color: var(--border-light); }
+.exercise-card.completed { border-color: var(--accent); border-width: 1.5px; }
+.ex-header {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 10px;
+}
+.ex-icon {
+  width: 72px; height: 72px;
+  min-width: 72px;
+  background: var(--surface3);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  border: 1px solid var(--border);
+  padding: 4px;
+  overflow: hidden;
+}
+.ex-icon svg {
+  width: 100%; height: 100%;
+}
+.ex-name {
+  font-family: 'Oswald', sans-serif;
+  font-size: 15px; font-weight: 600;
+  text-transform: uppercase;
+}
+.ex-rx { font-size: 12px; color: var(--text-dim); }
+.sets-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin-top: 8px;
+}
+.set-group { display: flex; flex-direction: column; gap: 3px; }
+.set-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.set-input {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--text);
+  padding: 8px 10px;
+  font-size: 15px;
+  font-family: 'Oswald', sans-serif;
+  font-weight: 500;
+  width: 100%;
+  text-align: center;
+  transition: border-color 0.2s;
+}
+.set-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(232,93,58,0.15);
+}
+.set-input::placeholder { color: var(--text-muted); font-size: 12px; }
+.set-unit { font-size: 10px; color: var(--text-muted); text-align: center; }
+
+.notes-area {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  padding: 12px 16px;
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 14px;
+  resize: vertical;
+  min-height: 70px;
+  margin-top: 16px;
+}
+.notes-area:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* BUTTONS */
+.btn {
+  font-family: 'Oswald', sans-serif;
+  font-size: 15px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 1px;
+  padding: 12px 28px;
+  border: none; border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.25s;
+  display: inline-flex; align-items: center; gap: 8px;
+}
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(232,93,58,0.3);
+}
+.btn-primary:hover {
+  background: var(--accent-glow);
+  box-shadow: 0 4px 24px rgba(232,93,58,0.45);
+  transform: translateY(-1px);
+}
+.btn-secondary {
+  background: var(--surface3);
+  color: var(--text);
+  border: 1px solid var(--border-light);
+}
+.btn-secondary:hover { background: var(--border); }
+.btn-danger {
+  background: transparent;
+  color: var(--danger);
+  border: 1px solid var(--danger);
+}
+.btn-danger:hover { background: rgba(232,64,87,0.1); }
+.btn-sm { padding: 8px 16px; font-size: 12px; }
+.btn-group { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+
+/* WEIGHT TRACKER */
+.weight-form {
+  display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap;
+}
+.form-group { display: flex; flex-direction: column; gap: 4px; }
+.form-label {
+  font-size: 12px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.5px;
+  color: var(--text-dim);
+}
+.form-input {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  padding: 10px 14px;
+  font-size: 16px;
+  font-family: 'Oswald', sans-serif;
+  font-weight: 500;
+}
+.form-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* HISTORY */
+.history-item {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 16px 20px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.history-item:hover {
+  border-color: var(--border-light);
+  background: var(--surface3);
+}
+.history-date {
+  font-family: 'Oswald', sans-serif;
+  font-size: 16px; font-weight: 600;
+}
+.history-meta {
+  font-size: 13px; color: var(--text-dim); margin-top: 2px;
+}
+.history-actions { display: flex; gap: 8px; }
+
+/* DASHBOARD STATS */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  text-align: center;
+}
+.stat-value {
+  font-family: 'Oswald', sans-serif;
+  font-size: 36px; font-weight: 700;
+  color: var(--accent);
+  line-height: 1;
+}
+.stat-label {
+  font-size: 12px; color: var(--text-dim);
+  text-transform: uppercase; letter-spacing: 1px;
+  margin-top: 6px;
+}
+.stat-sub { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+
+/* CHARTS */
+.chart-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+@media (max-width: 700px) {
+  .chart-grid { grid-template-columns: 1fr; }
+}
+.chart-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+}
+.chart-title {
+  font-family: 'Oswald', sans-serif;
+  font-size: 15px; font-weight: 600;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  color: var(--text-dim);
+}
+.chart-wrap {
+  position: relative;
+  height: 220px;
+}
+
+/* PROGRESSION TIP */
+.tip-bar {
+  background: linear-gradient(135deg, rgba(232,93,58,0.1), rgba(58,232,192,0.08));
+  border: 1px solid rgba(232,93,58,0.2);
+  border-radius: var(--radius-sm);
+  padding: 14px 20px;
+  margin-top: 16px;
+  display: flex; align-items: center; gap: 12px;
+  font-size: 13px; color: var(--text-dim);
+}
+.tip-bar strong { color: var(--accent); }
+
+/* MODAL */
+.modal-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: none;
+  align-items: center; justify-content: center;
+  padding: 20px;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px;
+  max-width: 700px;
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+.modal h3 {
+  font-family: 'Oswald', sans-serif;
+  font-size: 20px; font-weight: 600;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+.modal-exercises {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+@media (max-width: 600px) {
+  .modal-exercises { grid-template-columns: 1fr; }
+}
+.modal-ex {
+  background: var(--surface2);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+}
+.modal-ex-name {
+  font-family: 'Oswald', sans-serif;
+  font-size: 14px; font-weight: 600;
+  margin-bottom: 6px;
+  color: var(--accent);
+  display: flex; align-items: center; gap: 8px;
+}
+.modal-ex-icon {
+  width: 36px; height: 36px;
+  background: var(--surface3);
+  border-radius: 6px;
+  padding: 2px;
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.modal-ex-icon svg { width: 100%; height: 100%; }
+.modal-set {
+  font-size: 13px;
+  color: var(--text-dim);
+  padding: 2px 0;
+}
+
+/* MOBILE NAV */
+.nav-mobile {
+  display: none;
+  gap: 2px;
+}
+.nav-mobile .nav-tab { font-size: 11px; padding: 8px 10px; letter-spacing: 0.5px; }
+
+/* TOAST */
+.toast {
+  position: fixed; bottom: 24px; right: 24px;
+  background: var(--success);
+  color: #0c0c0e;
+  padding: 12px 24px;
+  border-radius: var(--radius-sm);
+  font-family: 'Oswald', sans-serif;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 14px;
+  z-index: 2000;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.35s;
+  pointer-events: none;
+}
+.toast.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* WEIGHT TABLE */
+.weight-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 16px;
+}
+.weight-table th {
+  font-family: 'Oswald', sans-serif;
+  font-size: 12px; font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  text-align: left;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.weight-table td {
+  padding: 10px 12px;
+  font-size: 14px;
+  border-bottom: 1px solid var(--border);
+}
+.weight-table tr:hover td { background: var(--surface2); }
+.weight-change { font-weight: 600; font-size: 13px; }
+.weight-change.pos { color: var(--accent); }
+.weight-change.neg { color: var(--accent2); }
+.delete-btn {
+  background: none; border: none;
+  color: var(--text-muted); cursor: pointer;
+  font-size: 16px; padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+.delete-btn:hover { color: var(--danger); background: rgba(232,64,87,0.1); }
+
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-muted);
+}
+.empty-state-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.5; }
+.empty-state-text { font-size: 15px; }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-brand">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+      <path d="M6.5 6.5v11M17.5 6.5v11M2 9.5h5M2 14.5h5M17 9.5h5M17 14.5h5M6.5 12h11"/>
+    </svg>
+    Iron Log
+  </div>
+  <div class="nav-tabs" id="navTabs">
+    <button class="nav-tab active" onclick="switchView('workout')">Workout</button>
+    <button class="nav-tab" onclick="switchView('history')">History</button>
+    <button class="nav-tab" onclick="switchView('cardio')">Cardio</button>
+    <button class="nav-tab" onclick="switchView('weight')">Weight</button>
+    <button class="nav-tab" onclick="switchView('dashboard')">Dashboard</button>
+  </div>
+  <div class="nav-mobile" id="navMobile">
+    <button class="nav-tab active" onclick="switchView('workout')">🏋️</button>
+    <button class="nav-tab" onclick="switchView('history')">📋</button>
+    <button class="nav-tab" onclick="switchView('cardio')">🏃</button>
+    <button class="nav-tab" onclick="switchView('weight')">⚖️</button>
+    <button class="nav-tab" onclick="switchView('dashboard')">📊</button>
+  </div>
+</nav>
+
+<div class="main">
+
+  <!-- ===== WORKOUT VIEW ===== -->
+  <div class="view active" id="view-workout">
+    <div class="page-header">
+      <div class="page-title">Beginner Full-Body Machine Routine</div>
+      <div class="page-subtitle">Week One — 2–3 non-consecutive days per week, perfect form</div>
+    </div>
+
+    <div class="warmup-row">
+      <div>
+        <div class="warmup-label">Warm-Up (5–7 min)</div>
+      </div>
+      <div class="warmup-options">
+        <label class="warmup-opt"><input type="checkbox" id="wu-treadmill"> Treadmill</label>
+        <label class="warmup-opt"><input type="checkbox" id="wu-bike"> Bike</label>
+        <label class="warmup-opt"><input type="checkbox" id="wu-elliptical"> Elliptical</label>
+      </div>
+      <div>
+        <input type="date" class="date-input" id="workout-date">
+      </div>
+    </div>
+
+    <div class="exercises-grid" id="exercisesGrid"></div>
+
+    <textarea class="notes-area" id="workout-notes" placeholder="Session notes... how did it feel? Any adjustments needed?"></textarea>
+
+    <div class="tip-bar">
+      <strong>📈 Progression Rule:</strong>
+      If you hit the top of the rep range with good form, increase weight next workout.
+    </div>
+
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="saveWorkout()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17,21 17,13 7,13 7,21"/><polyline points="7,3 7,8 15,8"/></svg>
+        Save Session
+      </button>
+      <button class="btn btn-secondary" onclick="clearForm()">Clear Form</button>
+    </div>
+  </div>
+
+  <!-- ===== HISTORY VIEW ===== -->
+  <div class="view" id="view-history">
+    <div class="page-header">
+      <div class="page-title">Session History</div>
+      <div class="page-subtitle">Review and manage past workouts</div>
+    </div>
+    <div id="historyList"></div>
+  </div>
+
+  <!-- ===== CARDIO VIEW ===== -->
+  <div class="view" id="view-cardio">
+    <div class="page-header">
+      <div class="page-title">Treadmill Tracker</div>
+      <div class="page-subtitle">Log your cardio sessions</div>
+    </div>
+
+    <div class="card">
+      <div class="weight-form" style="flex-wrap:wrap">
+        <div class="form-group">
+          <label class="form-label">Date</label>
+          <input type="date" class="form-input" id="treadmill-date">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Minutes</label>
+          <input type="number" step="0.5" class="form-input" id="treadmill-minutes" placeholder="30" style="width:90px">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Speed (mph)</label>
+          <input type="number" step="0.1" class="form-input" id="treadmill-speed" placeholder="3.5" style="width:100px">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Incline (%)</label>
+          <input type="number" step="0.5" class="form-input" id="treadmill-incline" placeholder="2.0" style="width:90px">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Calories</label>
+          <input type="number" class="form-input" id="treadmill-calories" placeholder="250" style="width:90px">
+        </div>
+        <button class="btn btn-primary" onclick="saveTreadmill()">Log Session</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title" style="margin-bottom:12px">Treadmill Log</div>
+      <div id="treadmillTableWrap"></div>
+    </div>
+  </div>
+
+  <!-- ===== WEIGHT VIEW ===== -->
+  <div class="view" id="view-weight">
+    <div class="page-header">
+      <div class="page-title">Weight Tracker</div>
+      <div class="page-subtitle">Log your weekly weigh-ins</div>
+    </div>
+
+    <div class="card">
+      <div class="weight-form">
+        <div class="form-group">
+          <label class="form-label">Date</label>
+          <input type="date" class="form-input" id="weight-date">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Weight (lbs)</label>
+          <input type="number" step="0.1" class="form-input" id="weight-value" placeholder="185.0" style="width:120px">
+        </div>
+        <button class="btn btn-primary" onclick="saveWeight()">Log Weight</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title" style="margin-bottom:12px">Weight Log</div>
+      <div id="weightTableWrap"></div>
+    </div>
+  </div>
+
+  <!-- ===== DASHBOARD VIEW ===== -->
+  <div class="view" id="view-dashboard">
+    <div class="page-header">
+      <div class="page-title">Dashboard</div>
+      <div class="page-subtitle">Your progress at a glance</div>
+    </div>
+
+    <div class="stats-row" id="statsRow"></div>
+
+    <div class="chart-grid">
+      <div class="chart-card">
+        <div class="chart-title">Body Weight Over Time</div>
+        <div class="chart-wrap"><canvas id="chartWeight"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Total Volume Per Session</div>
+        <div class="chart-wrap"><canvas id="chartVolume"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Chest Press Progression (lbs)</div>
+        <div class="chart-wrap"><canvas id="chartChest"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Leg Press Progression (lbs)</div>
+        <div class="chart-wrap"><canvas id="chartLeg"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Treadmill Minutes Over Time</div>
+        <div class="chart-wrap"><canvas id="chartTreadmill"></canvas></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal" id="modalContent" onclick="event.stopPropagation()"></div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ============= DATA =============
+const EXERCISES = [
+  { id: 'leg_press', name: 'Leg Press', sets: 3, rx: '2–3 sets × 10 reps',
+    icon: `<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Machine frame -->
+      <rect x="8" y="60" width="64" height="4" rx="2" fill="#3a3a42"/>
+      <path d="M12 60V20" stroke="#5a5a64" stroke-width="3" stroke-linecap="round"/>
+      <path d="M12 20L28 20" stroke="#5a5a64" stroke-width="3" stroke-linecap="round"/>
+      <!-- Seat -->
+      <rect x="20" y="40" width="22" height="4" rx="2" fill="#5a5a64"/>
+      <rect x="14" y="28" width="4" height="16" rx="2" fill="#5a5a64"/>
+      <!-- Weight stack -->
+      <rect x="8" y="22" width="8" height="14" rx="1" fill="#3a3a42" stroke="#5a5a64" stroke-width="1"/>
+      <line x1="9" y1="26" x2="15" y2="26" stroke="#5a5a64" stroke-width="0.5"/>
+      <line x1="9" y1="29" x2="15" y2="29" stroke="#5a5a64" stroke-width="0.5"/>
+      <line x1="9" y1="32" x2="15" y2="32" stroke="#5a5a64" stroke-width="0.5"/>
+      <!-- Foot plate -->
+      <rect x="52" y="24" width="5" height="20" rx="2" fill="#5a5a64"/>
+      <path d="M54.5 24L54.5 44" stroke="#8a8a94" stroke-width="1"/>
+      <!-- Person -->
+      <circle cx="30" cy="30" r="5" fill="#e85d3a"/>
+      <path d="M30 35V46" stroke="#e8e6e3" stroke-width="2.5" stroke-linecap="round"/>
+      <path d="M30 38L22 42" stroke="#e8e6e3" stroke-width="2" stroke-linecap="round"/>
+      <path d="M30 38L38 42" stroke="#e8e6e3" stroke-width="2" stroke-linecap="round"/>
+      <!-- Legs pushing -->
+      <path d="M30 46L38 50L52 36" stroke="#e8e6e3" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M30 46L38 52L52 40" stroke="#e8e6e3" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <!-- Guide rails -->
+      <path d="M42 20L60 20" stroke="#3a3a42" stroke-width="2"/>
+      <path d="M42 48L60 48" stroke="#3a3a42" stroke-width="2"/>
+    </svg>` },
+  { id: 'seated_leg_curl', name: 'Seated Leg Curl', sets: 3, rx: '2–3 sets × 10 reps',
+    icon: `<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Machine frame -->
+      <rect x="8" y="60" width="64" height="4" rx="2" fill="#3a3a42"/>
+      <path d="M14 60V24" stroke="#5a5a64" stroke-width="3" stroke-linecap="round"/>
+      <path d="M14 24L24 24" stroke="#5a5a64" stroke-width="2" stroke-linecap="round"/>
+      <!-- Seat -->
+      <rect x="22" y="38" width="24" height="4" rx="2" fill="#5a5a64"/>
+      <!-- Backrest -->
+      <rect x="18" y="24" width="4" height="18" rx="2" fill="#5a5a64"/>
+      <!-- Weight stack -->
+      <rect x="8" y="26" width="8" height="14" rx="1" fill="#3a3a42" stroke="#5a5a64" stroke-width="1"/>
+      <line x1="9" y1="30" x2="15" y2="30" stroke="#5a5a64" stroke-width="0.5"/>
+      <line x1="9" y1="33" x2="15" y2="33" stroke="#5a5a64" stroke-width="0.5"/>
+      <line x1="9" y1="36" x2="15" y2="36" stroke="#5a5a64" stroke-width="0.5"/>
+      <!-- Pad / lever -->
+      <path d="M46 42C52 48 54 54 52 58" stroke="#5a5a64" stroke-width="3" stroke-linecap="round"/>
+      <rect x="48" y="56" width="10" height="3" rx="1.5" fill="#5a5a64"/>
+      <!-- Person -->
+      <circle cx="30" cy="28" r="5" fill="#e85d3a"/>
+      <path d="M30 33V42" stroke="#e8e6e3" stroke-width="2.5" stroke-linecap="round"/>
+      <path d="M30 36L22 40" stroke="#e8e6e3" stroke-width="2" stroke-linecap="round"/>
+      <path d="M30 36L38 40" stroke="#e8e6e3" stroke-width="2" stroke-linecap="round"/>
+      <!-- Legs curling -->
+      <path d="M34 42L46 42L50 54" stroke="#e8e6e3" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M30 42L44 44L48 56" stroke="#e8e6e3" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>` },
+  { id: 'chest_press', name: 'Machine Chest Press', sets: 3, rx: '2–3 sets × 8–12 reps',
+    icon: `<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Machine frame -->
+      <rect x="8" y="60" width="64" height="4" rx="2" fill="#3a3a42"/>
+      <path d="M18 60V16" stroke="#5a5a64" stroke-width="3" stroke-linecap="round"/>
+      <path d="M18 16L28 16" stroke="#5a5a64" stroke-width="2" stroke-linecap="round"/>
+      <!-- Weight stack -->
+      <rect x="10" y="18" width="8" height="16" rx="1" fill="#3a3a42" stroke="#5a5a64" stroke-width="1"/>
+      <line x1="11" y1="22" x2="17" y2="22" stroke="#5a5a64" stroke-width="0.5"/>
+      <line x1="11" y1="25" x2="17" y2="25" stroke="#5a5a64" stroke-width="0.5"/>
+      <line x1="11" y1="28" x2="17" y2="28" stroke="#5a5a64" stroke-width="0.5"/>
+      <line x1="11" y1="31" x2="17" y2="31" stroke="#5a5a64" stroke-width="0.5"/>
+      <!-- Seat -->
+      <rect x="24" y="42" width="18" height="4" rx="2" fill="#5a5a64"/>
+      <!-- Backrest -->
+      <rect x="22" y="24" width="4" height="22" rx="2" fill="#5a5a64"/>
+      <!-- Handles/arms -->
+      <path d="M48 28L62 28" stroke="#5a5a64" stroke-width="3" stroke-linecap="round"/>
+      <path d="M48 38L62 38" stroke="#5a5a64" stroke-width="3" stroke-linecap="round"/>
+      <path d="M48 28V38" stroke="#5a5a64" stroke-width="2"/>
+      <circle cx="62" cy="28" r="2" fill="#5a5a64"/>
+      <circle cx="62" cy="38" r="2" fill="#5a5a64"/>
+      <!-- Person -->
+      <circle cx="34" cy="28" r="5" fill="#e85d3a"/>
+      <path d="M34 33V46" stroke="#e8e6e3" stroke-width="2.5" stroke-linecap="round"/>
+      <!-- Arms pushing forward -->
+      <path d="M34 36L44 33L48 28" stroke="#e8e6e3" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M34 36L44 37L48 38" stroke="#e8e6e3" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <!-- Legs -->
+      <path d="M34 46L28 56L24 60" stroke="#e8e6e3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M34 46L32 56L30 60" stroke="#e8e6e3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>` },
+  { id: 'shoulder_press', name: 'Machine Shoulder Press', sets: 3, rx: '2–3 sets × 8–12 reps',
+    icon: `<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Machine frame -->
+      <rect x="8" y="60" width="64" height="4" rx="2" fill="#3a3a42"/>
+      <path d="M24 60V12" stroke="#5a5a64" stroke-width="3" stroke-linecap="round"/>
+      <path d="M24 12L50 12" stroke="#5a5a64" stroke-width="2" stroke-linecap="round"/>
+      <!-- Weight stack -->
+      <rect x="14" y="14" width="8" height="16" rx="1" fill="#3a3a42" stroke="#5a5a64" stroke-width="1"/>
+      <line x1="15" y1="18" x2="21" y2="18" stroke="#5a5a64" stroke-width="0.5"/>
+      <line x1="15" y1="21" x2="21" y2="21" stroke="#5a5a64" stroke-width="0.5"/>
+      <line x1="15" y1="24" x2="21" y2="24" stroke="#5a5a64" stroke-width="0.5"/>
+      <line x1="15" y1="27" x2="21" y2="27" stroke="#5a5a64" stroke-width="0.5"/>
+      <!-- Seat -->
+      <rect x="28" y="44" width="18" height="4" rx="2" fill="#5a5a64"/>
+      <!-- Backrest -->
+      <rect x="26" y="26" width="4" height="22" rx="2" fill="#5a5a64"/>
+      <!-- Handles above -->
+      <path d="M40 16V22" stroke="#5a5a64" stroke-width="2.5" stroke-linecap="round"/>
+      <path d="M50 16V22" stroke="#5a5a64" stroke-width="2.5" stroke-linecap="round"/>
+      <circle cx="40" cy="22" r="2.5" fill="#5a5a64"/>
+      <circle cx="50" cy="22" r="2.5" fill="#5a5a64"/>
+      <!-- Person -->
+      <circle cx="38" cy="30" r="5" fill="#e85d3a"/>
+      <path d="M38 35V48" stroke="#e8e6e3" stroke-width="2.5" stroke-linecap="round"/>
+      <!-- Arms pressing up -->
+      <path d="M38 37L40 30L40 22" stroke="#e8e6e3" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M38 37L48 30L50 22" stroke="#e8e6e3" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <!-- Legs -->
+      <path d="M38 48L32 56L28 60" stroke="#e8e6e3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M38 48L36 56L34 60" stroke="#e8e6e3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>` },
+  { id: 'lat_pulldown', name: 'Lat Pulldown', sets: 3, rx: '2–3 sets × 8–12 reps',
+    icon: `<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Machine frame -->
+      <rect x="8" y="60" width="64" height="4" rx="2" fill="#3a3a42"/>
+      <path d="M40 60V8" stroke="#5a5a64" stroke-width="3" stroke-linecap="round"/>
+      <path d="M26 8L54 8" stroke="#5a5a64" stroke-width="2.5" stroke-linecap="round"/>
+      <!-- Weight stack -->
+      <rect x="56" y="10" width="8" height="18" rx="1" fill="#3a3a42" stroke="#5a5a64" stroke-width="1"/>
+      <line x1="57" y1="14" x2="63" y2="14" stroke="#5a5a64" stroke-width="0.5"/>
+      <line x1="57" y1="17" x2="63" y2="17" stroke="#5a5a64" stroke-width="0.5"/>
+      <line x1="57" y1="20" x2="63" y2="20" stroke="#5a5a64" stroke-width="0.5"/>
+      <line x1="57" y1="23" x2="63" y2="23" stroke="#5a5a64" stroke-width="0.5"/>
+      <!-- Pulley -->
+      <circle cx="40" cy="10" r="3" fill="#5a5a64"/>
+      <!-- Cable -->
+      <path d="M40 13V18" stroke="#8a8a94" stroke-width="1" stroke-dasharray="2 1"/>
+      <!-- Bar -->
+      <path d="M24 18L56 18" stroke="#5a5a64" stroke-width="3" stroke-linecap="round"/>
+      <!-- Cable to stack -->
+      <path d="M54 10L56 10" stroke="#8a8a94" stroke-width="1"/>
+      <!-- Seat -->
+      <rect x="30" y="48" width="20" height="4" rx="2" fill="#5a5a64"/>
+      <!-- Thigh pad -->
+      <rect x="32" y="44" width="16" height="3" rx="1.5" fill="#5a5a64"/>
+      <!-- Person -->
+      <circle cx="40" cy="30" r="5" fill="#e85d3a"/>
+      <path d="M40 35V52" stroke="#e8e6e3" stroke-width="2.5" stroke-linecap="round"/>
+      <!-- Arms pulling down bar -->
+      <path d="M40 37L30 28L26 18" stroke="#e8e6e3" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M40 37L50 28L54 18" stroke="#e8e6e3" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <!-- Legs -->
+      <path d="M40 52L34 58L30 60" stroke="#e8e6e3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M40 52L44 58L48 60" stroke="#e8e6e3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>` },
+  { id: 'seated_row', name: 'Seated Row', sets: 3, rx: '2–3 sets × 8–12 reps',
+    icon: `<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Machine frame -->
+      <rect x="8" y="60" width="64" height="4" rx="2" fill="#3a3a42"/>
+      <path d="M60 60V16" stroke="#5a5a64" stroke-width="3" stroke-linecap="round"/>
+      <path d="M52 16L60 16" stroke="#5a5a64" stroke-width="2" stroke-linecap="round"/>
+      <!-- Weight stack -->
+      <rect x="58" y="18" width="8" height="16" rx="1" fill="#3a3a42" stroke="#5a5a64" stroke-width="1"/>
+      <line x1="59" y1="22" x2="65" y2="22" stroke="#5a5a64" stroke-width="0.5"/>
+      <line x1="59" y1="25" x2="65" y2="25" stroke="#5a5a64" stroke-width="0.5"/>
+      <line x1="59" y1="28" x2="65" y2="28" stroke="#5a5a64" stroke-width="0.5"/>
+      <line x1="59" y1="31" x2="65" y2="31" stroke="#5a5a64" stroke-width="0.5"/>
+      <!-- Chest pad -->
+      <rect x="48" y="30" width="4" height="14" rx="2" fill="#5a5a64"/>
+      <!-- Seat -->
+      <rect x="20" y="46" width="28" height="4" rx="2" fill="#5a5a64"/>
+      <!-- Foot plate -->
+      <rect x="52" y="52" width="4" height="8" rx="1" fill="#5a5a64"/>
+      <!-- Handles -->
+      <path d="M52 34L56 34" stroke="#5a5a64" stroke-width="2.5" stroke-linecap="round"/>
+      <path d="M52 40L56 40" stroke="#5a5a64" stroke-width="2.5" stroke-linecap="round"/>
+      <circle cx="56" cy="34" r="2" fill="#5a5a64"/>
+      <circle cx="56" cy="40" r="2" fill="#5a5a64"/>
+      <!-- Cable -->
+      <path d="M56 18L56 34" stroke="#8a8a94" stroke-width="1" stroke-dasharray="2 1"/>
+      <!-- Person -->
+      <circle cx="36" cy="32" r="5" fill="#e85d3a"/>
+      <path d="M36 37V50" stroke="#e8e6e3" stroke-width="2.5" stroke-linecap="round"/>
+      <!-- Arms pulling back -->
+      <path d="M36 40L44 37L52 34" stroke="#e8e6e3" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M36 40L44 40L52 40" stroke="#e8e6e3" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <!-- Legs forward -->
+      <path d="M36 50L44 52L52 54" stroke="#e8e6e3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M36 50L44 54L52 58" stroke="#e8e6e3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>` },
+  { id: 'ab_crunch', name: 'Ab Crunch Machine', sets: 3, rx: '2–3 sets × 10–15 reps',
+    icon: `<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Machine frame -->
+      <rect x="8" y="60" width="64" height="4" rx="2" fill="#3a3a42"/>
+      <path d="M20 60V14" stroke="#5a5a64" stroke-width="3" stroke-linecap="round"/>
+      <path d="M20 14L40 14" stroke="#5a5a64" stroke-width="2" stroke-linecap="round"/>
+      <!-- Weight stack -->
+      <rect x="12" y="16" width="8" height="14" rx="1" fill="#3a3a42" stroke="#5a5a64" stroke-width="1"/>
+      <line x1="13" y1="20" x2="19" y2="20" stroke="#5a5a64" stroke-width="0.5"/>
+      <line x1="13" y1="23" x2="19" y2="23" stroke="#5a5a64" stroke-width="0.5"/>
+      <line x1="13" y1="26" x2="19" y2="26" stroke="#5a5a64" stroke-width="0.5"/>
+      <!-- Seat -->
+      <rect x="26" y="44" width="20" height="4" rx="2" fill="#5a5a64"/>
+      <!-- Backrest -->
+      <rect x="24" y="28" width="4" height="20" rx="2" fill="#5a5a64"/>
+      <!-- Arm pads / handles -->
+      <path d="M36 16L36 22" stroke="#5a5a64" stroke-width="2.5" stroke-linecap="round"/>
+      <rect x="32" y="20" width="12" height="4" rx="2" fill="#5a5a64"/>
+      <!-- Pivot -->
+      <circle cx="36" cy="16" r="2" fill="#5a5a64"/>
+      <!-- Shin pads -->
+      <path d="M42 52L50 52" stroke="#5a5a64" stroke-width="3" stroke-linecap="round"/>
+      <path d="M42 56L50 56" stroke="#5a5a64" stroke-width="3" stroke-linecap="round"/>
+      <!-- Person -->
+      <circle cx="34" cy="28" r="5" fill="#e85d3a"/>
+      <path d="M34 33V48" stroke="#e8e6e3" stroke-width="2.5" stroke-linecap="round"/>
+      <!-- Arms on pads -->
+      <path d="M34 36L38 28L36 22" stroke="#e8e6e3" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M34 36L32 28L34 22" stroke="#e8e6e3" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <!-- Legs under pads -->
+      <path d="M34 48L40 50L46 52" stroke="#e8e6e3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M34 48L40 52L46 56" stroke="#e8e6e3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>` },
+];
+
+function getWorkouts() {
+  return JSON.parse(localStorage.getItem('ironlog_workouts') || '[]');
+}
+function saveWorkoutsLocal(data) {
+  localStorage.setItem('ironlog_workouts', JSON.stringify(data));
+}
+function getWeights() {
+  return JSON.parse(localStorage.getItem('ironlog_weights') || '[]');
+}
+function saveWeightsLocal(data) {
+  localStorage.setItem('ironlog_weights', JSON.stringify(data));
+}
+
+// ============= API LAYER =============
+const API = {
+  async fetchWorkouts() {
+    try {
+      const res = await fetch('/api/workouts');
+      if (!res.ok) throw new Error('API error');
+      const rows = await res.json();
+      // Normalize: DB returns snake_case, map to our format
+      const workouts = rows.map(r => ({
+        id: r.id,
+        date: r.date?.split('T')[0] || r.date,
+        warmup: {
+          treadmill: r.warmup_treadmill,
+          bike: r.warmup_bike,
+          elliptical: r.warmup_elliptical,
+        },
+        exercises: typeof r.exercises === 'string' ? JSON.parse(r.exercises) : r.exercises,
+        notes: r.notes || '',
+      }));
+      saveWorkoutsLocal(workouts); // cache locally
+      return workouts;
+    } catch (err) {
+      console.warn('API unavailable, using local cache:', err.message);
+      return getWorkouts();
+    }
+  },
+
+  async saveWorkout(session) {
+    try {
+      const res = await fetch('/api/workouts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(session),
+      });
+      if (!res.ok) throw new Error('Save failed');
+      return await res.json();
+    } catch (err) {
+      console.warn('API save failed, saving locally:', err.message);
+      const workouts = getWorkouts();
+      session.id = Date.now();
+      workouts.push(session);
+      saveWorkoutsLocal(workouts);
+      return session;
+    }
+  },
+
+  async deleteWorkout(id) {
+    try {
+      await fetch(`/api/workouts?id=${id}`, { method: 'DELETE' });
+    } catch (err) {
+      console.warn('API delete failed, removing locally:', err.message);
+      saveWorkoutsLocal(getWorkouts().filter(w => w.id !== id));
+    }
+  },
+
+  async fetchWeights() {
+    try {
+      const res = await fetch('/api/weights');
+      if (!res.ok) throw new Error('API error');
+      const rows = await res.json();
+      const weights = rows.map(r => ({
+        date: r.date?.split('T')[0] || r.date,
+        value: parseFloat(r.value),
+      }));
+      saveWeightsLocal(weights);
+      return weights;
+    } catch (err) {
+      console.warn('API unavailable, using local cache:', err.message);
+      return getWeights();
+    }
+  },
+
+  async saveWeight(date, value) {
+    try {
+      const res = await fetch('/api/weights', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date, value }),
+      });
+      if (!res.ok) throw new Error('Save failed');
+      return await res.json();
+    } catch (err) {
+      console.warn('API save failed, saving locally:', err.message);
+      const weights = getWeights();
+      const idx = weights.findIndex(w => w.date === date);
+      if (idx >= 0) weights[idx].value = value;
+      else weights.push({ date, value });
+      weights.sort((a,b) => new Date(a.date) - new Date(b.date));
+      saveWeightsLocal(weights);
+    }
+  },
+
+  async deleteWeight(date) {
+    try {
+      await fetch(`/api/weights?date=${date}`, { method: 'DELETE' });
+    } catch (err) {
+      console.warn('API delete failed, removing locally:', err.message);
+      saveWeightsLocal(getWeights().filter(w => w.date !== date));
+    }
+  },
+
+  // Treadmill
+  async fetchTreadmill() {
+    try {
+      const res = await fetch('/api/treadmill');
+      if (!res.ok) throw new Error('API error');
+      const rows = await res.json();
+      const entries = rows.map(r => ({
+        id: r.id,
+        date: r.date?.split('T')[0] || r.date,
+        minutes: parseFloat(r.minutes),
+        speed: r.speed ? parseFloat(r.speed) : null,
+        incline: r.incline ? parseFloat(r.incline) : null,
+        calories: r.calories ? parseInt(r.calories) : null,
+        notes: r.notes || '',
+      }));
+      localStorage.setItem('ironlog_treadmill', JSON.stringify(entries));
+      return entries;
+    } catch (err) {
+      console.warn('API unavailable, using local cache:', err.message);
+      return JSON.parse(localStorage.getItem('ironlog_treadmill') || '[]');
+    }
+  },
+
+  async saveTreadmill(entry) {
+    try {
+      const res = await fetch('/api/treadmill', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(entry),
+      });
+      if (!res.ok) throw new Error('Save failed');
+      return await res.json();
+    } catch (err) {
+      console.warn('API save failed, saving locally:', err.message);
+      const entries = JSON.parse(localStorage.getItem('ironlog_treadmill') || '[]');
+      entry.id = Date.now();
+      entries.push(entry);
+      localStorage.setItem('ironlog_treadmill', JSON.stringify(entries));
+      return entry;
+    }
+  },
+
+  async deleteTreadmill(id) {
+    try {
+      await fetch(`/api/treadmill?id=${id}`, { method: 'DELETE' });
+    } catch (err) {
+      console.warn('API delete failed, removing locally:', err.message);
+      const entries = JSON.parse(localStorage.getItem('ironlog_treadmill') || '[]').filter(e => e.id !== id);
+      localStorage.setItem('ironlog_treadmill', JSON.stringify(entries));
+    }
+  },
+
+  async migrate() {
+    const res = await fetch('/api/migrate', { method: 'POST' });
+    return await res.json();
+  }
+};
+
+// ============= VIEWS =============
+function switchView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + name).classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => {
+    if (t.textContent.toLowerCase().includes(name) || 
+        (name === 'workout' && t.textContent === '🏋️') ||
+        (name === 'history' && t.textContent === '📋') ||
+        (name === 'cardio' && t.textContent === '🏃') ||
+        (name === 'weight' && t.textContent === '⚖️') ||
+        (name === 'dashboard' && t.textContent === '📊')) {
+      t.classList.add('active');
+    }
+  });
+  if (name === 'history') renderHistory();
+  if (name === 'cardio') renderTreadmillTable();
+  if (name === 'weight') renderWeightTable();
+  if (name === 'dashboard') renderDashboard();
+}
+
+// ============= WORKOUT FORM =============
+function buildExerciseCards() {
+  const grid = document.getElementById('exercisesGrid');
+  grid.innerHTML = EXERCISES.map(ex => `
+    <div class="exercise-card" id="card-${ex.id}">
+      <div class="ex-header">
+        <div class="ex-icon">${ex.icon}</div>
+        <div>
+          <div class="ex-name">${ex.name}</div>
+          <div class="ex-rx">${ex.rx}</div>
+        </div>
+      </div>
+      <div class="sets-row">
+        ${[1,2,3].map(s => `
+          <div class="set-group">
+            <div class="set-label">Set ${s}</div>
+            <input type="number" class="set-input" id="${ex.id}_set${s}" placeholder="—" min="0" oninput="checkCardComplete('${ex.id}')">
+            <div class="set-unit">lbs</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+function checkCardComplete(exId) {
+  const card = document.getElementById('card-' + exId);
+  const inputs = card.querySelectorAll('.set-input');
+  const filled = Array.from(inputs).some(i => i.value !== '');
+  card.classList.toggle('completed', filled);
+}
+
+function clearForm() {
+  EXERCISES.forEach(ex => {
+    [1,2,3].forEach(s => {
+      document.getElementById(`${ex.id}_set${s}`).value = '';
+    });
+    document.getElementById('card-' + ex.id).classList.remove('completed');
+  });
+  document.getElementById('workout-notes').value = '';
+  document.getElementById('wu-treadmill').checked = false;
+  document.getElementById('wu-bike').checked = false;
+  document.getElementById('wu-elliptical').checked = false;
+  document.getElementById('workout-date').value = todayStr();
+}
+
+async function saveWorkout() {
+  const date = document.getElementById('workout-date').value;
+  if (!date) { toast('Please select a date', true); return; }
+
+  const session = {
+    date: date,
+    warmup: {
+      treadmill: document.getElementById('wu-treadmill').checked,
+      bike: document.getElementById('wu-bike').checked,
+      elliptical: document.getElementById('wu-elliptical').checked,
+    },
+    exercises: {},
+    notes: document.getElementById('workout-notes').value,
+  };
+
+  let hasData = false;
+  EXERCISES.forEach(ex => {
+    const sets = [];
+    [1,2,3].forEach(s => {
+      const val = document.getElementById(`${ex.id}_set${s}`).value;
+      sets.push(val ? parseFloat(val) : null);
+    });
+    if (sets.some(v => v !== null)) hasData = true;
+    session.exercises[ex.id] = sets;
+  });
+
+  if (!hasData) { toast('Log at least one set before saving!', true); return; }
+
+  await API.saveWorkout(session);
+  clearForm();
+  toast('Session saved!');
+}
+
+// ============= HISTORY =============
+async function renderHistory() {
+  const wrap = document.getElementById('historyList');
+  wrap.innerHTML = '<div class="empty-state"><div class="empty-state-text" style="color:var(--text-dim)">Loading sessions...</div></div>';
+
+  const workouts = (await API.fetchWorkouts()).sort((a,b) => new Date(b.date) - new Date(a.date));
+
+  if (!workouts.length) {
+    wrap.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📋</div><div class="empty-state-text">No sessions logged yet. Complete your first workout!</div></div>`;
+    return;
+  }
+
+  wrap.innerHTML = workouts.map(w => {
+    const exCount = Object.values(w.exercises).filter(s => s.some(v => v !== null)).length;
+    const warmups = [w.warmup.treadmill && 'Treadmill', w.warmup.bike && 'Bike', w.warmup.elliptical && 'Elliptical'].filter(Boolean).join(', ');
+    return `
+      <div class="history-item" onclick="viewSession(${w.id})">
+        <div>
+          <div class="history-date">${formatDate(w.date)}</div>
+          <div class="history-meta">${exCount} exercise${exCount !== 1 ? 's' : ''} logged${warmups ? ' · ' + warmups : ''}</div>
+        </div>
+        <div class="history-actions">
+          <button class="btn btn-sm btn-secondary" onclick="event.stopPropagation(); loadSession(${w.id})">Load</button>
+          <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); deleteSession(${w.id})">✕</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+async function viewSession(id) {
+  const workouts = await API.fetchWorkouts();
+  const w = workouts.find(w => w.id === id);
+  if (!w) return;
+  const modal = document.getElementById('modalContent');
+  const warmups = [w.warmup.treadmill && 'Treadmill', w.warmup.bike && 'Bike', w.warmup.elliptical && 'Elliptical'].filter(Boolean).join(', ') || 'None';
+
+  modal.innerHTML = `
+    <h3>${formatDate(w.date)}</h3>
+    <div style="font-size:13px;color:var(--text-dim);margin-bottom:16px">Warm-up: ${warmups}</div>
+    <div class="modal-exercises">
+      ${EXERCISES.map(ex => {
+        const sets = w.exercises[ex.id] || [null,null,null];
+        if (sets.every(v => v === null)) return '';
+        return `<div class="modal-ex">
+          <div class="modal-ex-name"><div class="modal-ex-icon">${ex.icon}</div> ${ex.name}</div>
+          ${sets.map((v,i) => v !== null ? `<div class="modal-set">Set ${i+1}: <strong>${v} lbs</strong></div>` : '').join('')}
+        </div>`;
+      }).join('')}
+    </div>
+    ${w.notes ? `<div style="margin-top:16px;padding:12px;background:var(--surface2);border-radius:6px;font-size:13px;color:var(--text-dim)"><strong>Notes:</strong> ${w.notes}</div>` : ''}
+    <div class="btn-group"><button class="btn btn-secondary" onclick="closeModal()">Close</button></div>
+  `;
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+async function loadSession(id) {
+  const workouts = await API.fetchWorkouts();
+  const w = workouts.find(w => w.id === id);
+  if (!w) return;
+  switchView('workout');
+  document.getElementById('workout-date').value = todayStr();
+  EXERCISES.forEach(ex => {
+    const sets = w.exercises[ex.id] || [null,null,null];
+    [1,2,3].forEach((s,i) => {
+      document.getElementById(`${ex.id}_set${s}`).value = sets[i] || '';
+    });
+    checkCardComplete(ex.id);
+  });
+  toast('Previous weights loaded — update and save as new session');
+}
+
+async function deleteSession(id) {
+  if (!confirm('Delete this session?')) return;
+  await API.deleteWorkout(id);
+  renderHistory();
+  toast('Session deleted');
+}
+
+function closeModal(e) {
+  if (e && e.target !== document.getElementById('modalOverlay')) return;
+  document.getElementById('modalOverlay').classList.remove('open');
+}
+
+// ============= WEIGHT =============
+async function saveWeight() {
+  const date = document.getElementById('weight-date').value;
+  const val = parseFloat(document.getElementById('weight-value').value);
+  if (!date || isNaN(val)) { toast('Enter date and weight', true); return; }
+
+  await API.saveWeight(date, val);
+  document.getElementById('weight-value').value = '';
+  renderWeightTable();
+  toast('Weight logged!');
+}
+
+async function renderWeightTable() {
+  const wrap = document.getElementById('weightTableWrap');
+  wrap.innerHTML = '<div class="empty-state"><div class="empty-state-text" style="color:var(--text-dim)">Loading...</div></div>';
+
+  const weights = await API.fetchWeights();
+
+  if (!weights.length) {
+    wrap.innerHTML = `<div class="empty-state"><div class="empty-state-icon">⚖️</div><div class="empty-state-text">No weight entries yet</div></div>`;
+    return;
+  }
+
+  const sorted = [...weights].sort((a,b) => new Date(b.date) - new Date(a.date));
+  wrap.innerHTML = `
+    <table class="weight-table">
+      <thead><tr><th>Date</th><th>Weight</th><th>Change</th><th></th></tr></thead>
+      <tbody>
+        ${sorted.map((w, i) => {
+          const prev = sorted[i+1];
+          let change = '';
+          if (prev) {
+            const diff = (w.value - prev.value).toFixed(1);
+            if (diff > 0) change = `<span class="weight-change pos">+${diff}</span>`;
+            else if (diff < 0) change = `<span class="weight-change neg">${diff}</span>`;
+            else change = `<span class="weight-change">0.0</span>`;
+          }
+          return `<tr>
+            <td>${formatDate(w.date)}</td>
+            <td><strong>${w.value} lbs</strong></td>
+            <td>${change}</td>
+            <td><button class="delete-btn" onclick="deleteWeight('${w.date}')" title="Delete">✕</button></td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>`;
+}
+
+async function deleteWeight(date) {
+  await API.deleteWeight(date);
+  renderWeightTable();
+}
+
+// ============= TREADMILL =============
+async function saveTreadmill() {
+  const date = document.getElementById('treadmill-date').value;
+  const minutes = parseFloat(document.getElementById('treadmill-minutes').value);
+  if (!date || isNaN(minutes)) { toast('Enter date and minutes', true); return; }
+
+  const entry = {
+    date,
+    minutes,
+    speed: parseFloat(document.getElementById('treadmill-speed').value) || null,
+    incline: parseFloat(document.getElementById('treadmill-incline').value) || null,
+    calories: parseInt(document.getElementById('treadmill-calories').value) || null,
+    notes: '',
+  };
+
+  await API.saveTreadmill(entry);
+  document.getElementById('treadmill-minutes').value = '';
+  document.getElementById('treadmill-speed').value = '';
+  document.getElementById('treadmill-incline').value = '';
+  document.getElementById('treadmill-calories').value = '';
+  renderTreadmillTable();
+  toast('Treadmill session logged!');
+}
+
+async function renderTreadmillTable() {
+  const wrap = document.getElementById('treadmillTableWrap');
+  wrap.innerHTML = '<div class="empty-state"><div class="empty-state-text" style="color:var(--text-dim)">Loading...</div></div>';
+
+  const entries = await API.fetchTreadmill();
+
+  if (!entries.length) {
+    wrap.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🏃</div><div class="empty-state-text">No treadmill sessions yet</div></div>`;
+    return;
+  }
+
+  const sorted = [...entries].sort((a,b) => new Date(b.date) - new Date(a.date));
+  wrap.innerHTML = `
+    <table class="weight-table">
+      <thead><tr><th>Date</th><th>Minutes</th><th>Speed</th><th>Incline</th><th>Calories</th><th></th></tr></thead>
+      <tbody>
+        ${sorted.map(e => `<tr>
+            <td>${formatDate(e.date)}</td>
+            <td><strong>${e.minutes} min</strong></td>
+            <td>${e.speed ? e.speed + ' mph' : '—'}</td>
+            <td>${e.incline ? e.incline + '%' : '—'}</td>
+            <td>${e.calories ? e.calories + ' cal' : '—'}</td>
+            <td><button class="delete-btn" onclick="deleteTreadmill(${e.id})" title="Delete">✕</button></td>
+          </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+async function deleteTreadmill(id) {
+  await API.deleteTreadmill(id);
+  renderTreadmillTable();
+}
+
+// ============= DASHBOARD =============
+let charts = {};
+
+async function renderDashboard() {
+  const workouts = (await API.fetchWorkouts()).sort((a,b) => new Date(a.date) - new Date(b.date));
+  const weights = (await API.fetchWeights()).sort((a,b) => new Date(a.date) - new Date(b.date));
+  const treadmillEntries = (await API.fetchTreadmill()).sort((a,b) => new Date(a.date) - new Date(b.date));
+
+  // Stats
+  const totalSessions = workouts.length;
+  const latestWeight = weights.length ? weights[weights.length-1].value : '—';
+  const startWeight = weights.length ? weights[0].value : null;
+  const weightDiff = (startWeight && weights.length > 1) ? (latestWeight - startWeight).toFixed(1) : null;
+
+  let totalVol = 0;
+  workouts.forEach(w => {
+    Object.values(w.exercises).forEach(sets => {
+      sets.forEach(v => { if (v) totalVol += v; });
+    });
+  });
+
+  const totalTreadmillMin = treadmillEntries.reduce((sum, e) => sum + e.minutes, 0);
+  const totalCalories = treadmillEntries.reduce((sum, e) => sum + (e.calories || 0), 0);
+
+  const statsRow = document.getElementById('statsRow');
+  statsRow.innerHTML = `
+    <div class="stat-card"><div class="stat-value">${totalSessions}</div><div class="stat-label">Gym Sessions</div></div>
+    <div class="stat-card"><div class="stat-value">${typeof latestWeight === 'number' ? latestWeight : '—'}</div><div class="stat-label">Current Weight (lbs)</div>${weightDiff !== null ? `<div class="stat-sub">${weightDiff > 0 ? '+' : ''}${weightDiff} lbs total</div>` : ''}</div>
+    <div class="stat-card"><div class="stat-value">${totalVol > 0 ? Math.round(totalVol).toLocaleString() : '—'}</div><div class="stat-label">Total Volume (lbs)</div></div>
+    <div class="stat-card" style="border-color:rgba(58,232,192,0.3)"><div class="stat-value" style="color:var(--accent2)">${totalTreadmillMin > 0 ? Math.round(totalTreadmillMin) : '—'}</div><div class="stat-label">Treadmill Minutes</div>${totalCalories > 0 ? `<div class="stat-sub">${totalCalories.toLocaleString()} cal burned</div>` : ''}</div>
+  `;
+
+  // Chart defaults
+  const chartOpts = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { ticks: { color: '#5a5a64', font: { size: 11, family: 'Oswald' }}, grid: { color: 'rgba(255,255,255,0.04)' }},
+      y: { ticks: { color: '#5a5a64', font: { size: 11, family: 'Oswald' }}, grid: { color: 'rgba(255,255,255,0.06)' }},
+    },
+  };
+
+  // Destroy old charts
+  Object.values(charts).forEach(c => c.destroy());
+  charts = {};
+
+  // Weight chart
+  if (weights.length) {
+    charts.weight = new Chart(document.getElementById('chartWeight'), {
+      type: 'line',
+      data: {
+        labels: weights.map(w => shortDate(w.date)),
+        datasets: [{
+          data: weights.map(w => w.value),
+          borderColor: '#3ae8c0',
+          backgroundColor: 'rgba(58,232,192,0.1)',
+          fill: true,
+          tension: 0.3,
+          pointRadius: 4,
+          pointBackgroundColor: '#3ae8c0',
+        }]
+      },
+      options: { ...chartOpts }
+    });
+  }
+
+  // Volume chart
+  if (workouts.length) {
+    const volumes = workouts.map(w => {
+      let vol = 0;
+      Object.values(w.exercises).forEach(sets => sets.forEach(v => { if (v) vol += v; }));
+      return vol;
+    });
+    charts.volume = new Chart(document.getElementById('chartVolume'), {
+      type: 'bar',
+      data: {
+        labels: workouts.map(w => shortDate(w.date)),
+        datasets: [{
+          data: volumes,
+          backgroundColor: 'rgba(232,93,58,0.7)',
+          borderColor: '#e85d3a',
+          borderWidth: 1,
+          borderRadius: 4,
+        }]
+      },
+      options: { ...chartOpts }
+    });
+  }
+
+  // Exercise progression charts
+  function makeProgressionChart(canvasId, exId, color) {
+    const data = workouts.filter(w => w.exercises[exId] && w.exercises[exId].some(v => v !== null))
+      .map(w => ({
+        date: shortDate(w.date),
+        max: Math.max(...w.exercises[exId].filter(v => v !== null))
+      }));
+    if (data.length) {
+      charts[exId] = new Chart(document.getElementById(canvasId), {
+        type: 'line',
+        data: {
+          labels: data.map(d => d.date),
+          datasets: [{
+            data: data.map(d => d.max),
+            borderColor: color,
+            backgroundColor: color.replace('1)', '0.1)'),
+            fill: true,
+            tension: 0.3,
+            pointRadius: 4,
+            pointBackgroundColor: color,
+          }]
+        },
+        options: { ...chartOpts }
+      });
+    }
+  }
+
+  makeProgressionChart('chartChest', 'chest_press', 'rgba(91,141,239,1)');
+  makeProgressionChart('chartLeg', 'leg_press', 'rgba(232,93,58,1)');
+
+  // Treadmill chart
+  if (treadmillEntries.length) {
+    charts.treadmill = new Chart(document.getElementById('chartTreadmill'), {
+      type: 'bar',
+      data: {
+        labels: treadmillEntries.map(e => shortDate(e.date)),
+        datasets: [{
+          data: treadmillEntries.map(e => e.minutes),
+          backgroundColor: 'rgba(58,232,192,0.6)',
+          borderColor: '#3ae8c0',
+          borderWidth: 1,
+          borderRadius: 4,
+        }]
+      },
+      options: { ...chartOpts }
+    });
+  }
+}
+
+// ============= UTILS =============
+function todayStr() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+function formatDate(str) {
+  const d = new Date(str + 'T12:00:00');
+  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function shortDate(str) {
+  const d = new Date(str + 'T12:00:00');
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function toast(msg, isError) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.style.background = isError ? 'var(--danger)' : 'var(--success)';
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2400);
+}
+
+// ============= INIT =============
+buildExerciseCards();
+document.getElementById('workout-date').value = todayStr();
+document.getElementById('weight-date').value = todayStr();
+document.getElementById('treadmill-date').value = todayStr();
+
+// Auto-run migration on first visit (or when schema changes)
+(async function init() {
+  try {
+    const schemaVersion = '2'; // bump this when adding tables
+    const currentVersion = localStorage.getItem('ironlog_schema_version');
+    if (currentVersion !== schemaVersion) {
+      console.log('Running DB migration...');
+      const res = await API.migrate();
+      if (res.success) {
+        localStorage.setItem('ironlog_schema_version', schemaVersion);
+        localStorage.removeItem('ironlog_db_ready');
+        console.log('DB tables ready.');
+      }
+    }
+  } catch (err) {
+    console.warn('Migration skipped (API may not be available yet):', err.message);
+  }
+})();
+
+// Mobile nav detection
+if (window.innerWidth <= 700) {
+  document.getElementById('navTabs').style.display = 'none';
+  document.getElementById('navMobile').style.display = 'flex';
+}
+window.addEventListener('resize', () => {
+  document.getElementById('navTabs').style.display = window.innerWidth <= 700 ? 'none' : 'flex';
+  document.getElementById('navMobile').style.display = window.innerWidth <= 700 ? 'flex' : 'none';
+});
+</script>
+</body>
+</html>
