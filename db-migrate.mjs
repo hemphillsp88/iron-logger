@@ -28,6 +28,14 @@ async function migrate() {
   `;
 
   await sql`CREATE INDEX IF NOT EXISTS idx_workouts_date ON workouts(date DESC)`;
+
+  await sql`
+    DO $$ BEGIN
+      ALTER TABLE workouts ADD COLUMN IF NOT EXISTS workout_type TEXT;
+    EXCEPTION WHEN duplicate_column THEN NULL;
+    END $$
+  `;
+
   await sql`CREATE INDEX IF NOT EXISTS idx_weight_date ON weight_entries(date DESC)`;
 
   await sql`

@@ -19,7 +19,7 @@ export default async (req) => {
     if (req.method === "GET") {
       const rows = await sql`
         SELECT id, date, warmup_treadmill, warmup_bike, warmup_elliptical,
-               exercises, notes, created_at
+               exercises, notes, workout_type, created_at
         FROM workouts ORDER BY date DESC
       `;
       return new Response(JSON.stringify(rows), { status: 200, headers });
@@ -28,7 +28,7 @@ export default async (req) => {
     // POST — save a new workout session
     if (req.method === "POST") {
       const body = await req.json();
-      const { date, warmup, exercises, notes } = body;
+      const { date, warmup, exercises, notes, workout_type } = body;
 
       if (!date || !exercises) {
         return new Response(
@@ -38,16 +38,17 @@ export default async (req) => {
       }
 
       const [row] = await sql`
-        INSERT INTO workouts (date, warmup_treadmill, warmup_bike, warmup_elliptical, exercises, notes)
+        INSERT INTO workouts (date, warmup_treadmill, warmup_bike, warmup_elliptical, exercises, notes, workout_type)
         VALUES (
           ${date},
           ${warmup?.treadmill || false},
           ${warmup?.bike || false},
           ${warmup?.elliptical || false},
           ${JSON.stringify(exercises)},
-          ${notes || ""}
+          ${notes || ""},
+          ${workout_type || null}
         )
-        RETURNING id, date, warmup_treadmill, warmup_bike, warmup_elliptical, exercises, notes, created_at
+        RETURNING id, date, warmup_treadmill, warmup_bike, warmup_elliptical, exercises, notes, workout_type, created_at
       `;
 
       return new Response(JSON.stringify(row), { status: 201, headers });
